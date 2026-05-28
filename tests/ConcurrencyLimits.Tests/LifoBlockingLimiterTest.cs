@@ -56,6 +56,7 @@ public class LifoBlockingLimiterTest
     }
 
     [Fact]
+    [Trait("Category", "Timing")]
     public void RejectWhenBacklogSizeReached()
     {
         AcquireNAsync(_blockingLimiter, 14);
@@ -70,6 +71,7 @@ public class LifoBlockingLimiterTest
     }
 
     [Fact]
+    [Trait("Category", "Timing")]
     public void AdaptWhenLimitIncreases()
     {
         AcquireN(_blockingLimiter, 4);
@@ -100,6 +102,7 @@ public class LifoBlockingLimiterTest
     }
 
     [Fact]
+    [Trait("Category", "Timing")]
     public void VerifyLifoOrder()
     {
         var firstBatch = AcquireN(_blockingLimiter, 4);
