@@ -8,4 +8,27 @@
     <GenerateDocumentationFile>true</GenerateDocumentationFile>
     <NoWarn>$(NoWarn);CS1591</NoWarn>
   </PropertyGroup>
+
+  <!-- NuGet package metadata (applied to all packable libraries) -->
+  <PropertyGroup Condition="'$(IsPackable)' != 'false'">
+    <Version>1.0.0</Version>
+    <Authors>CosX</Authors>
+    <Company>CosX</Company>
+    <Copyright>Copyright 2026 CosX. Original work Copyright 2018 Netflix, Inc.</Copyright>
+    <PackageLicenseExpression>Apache-2.0</PackageLicenseExpression>
+    <PackageReadmeFile>README.md</PackageReadmeFile>
+    <PackageProjectUrl>https://github.com/CosX/ConcurrencyLimits.NET</PackageProjectUrl>
+    <RepositoryUrl>https://github.com/CosX/ConcurrencyLimits.NET</RepositoryUrl>
+    <RepositoryType>git</RepositoryType>
+    <PackageTags>concurrency;rate-limiting;load-shedding;adaptive-concurrency;congestion-control;aspnetcore;grpc;resilience</PackageTags>
+    <PackageRequireLicenseAcceptance>false</PackageRequireLicenseAcceptance>
+    <IncludeSymbols>true</IncludeSymbols>
+    <SymbolPackageFormat>snupkg</SymbolPackageFormat>
+    <PublishRepositoryUrl>true</PublishRepositoryUrl>
+    <EmbedUntrackedSources>true</EmbedUntrackedSources>
+  </PropertyGroup>
+
+  <ItemGroup Condition="'$(IsPackable)' != 'false'">
+    <None Include="$(MSBuildThisFileDirectory)README.md" Pack="true" PackagePath="\" />
+  </ItemGroup>
 </Project>
