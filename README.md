@@ -14,6 +14,22 @@ Targets `net10.0`.
 | `ConcurrencyLimits.AspNetCore` | Request-pipeline middleware that returns 429 when the limit is reached. |
 | `ConcurrencyLimits.Grpc` | gRPC server and client interceptors (unary calls). |
 
+## Install
+
+```bash
+dotnet add package ConcurrencyLimits              # core algorithms and limiters
+dotnet add package ConcurrencyLimits.AspNetCore   # ASP.NET Core middleware
+dotnet add package ConcurrencyLimits.Grpc         # gRPC interceptors
+```
+
+Or via `PackageReference`:
+
+```xml
+<PackageReference Include="ConcurrencyLimits" Version="1.0.0" />
+```
+
+The `AspNetCore` and `Grpc` packages depend on the core package, so installing either pulls it in transitively.
+
 ## Build and test
 
 ```bash
