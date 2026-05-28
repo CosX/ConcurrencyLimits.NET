@@ -1,0 +1,17 @@
+<Project Sdk="Microsoft.NET.Sdk">
+
+  <PropertyGroup>
+    <RootNamespace>ConcurrencyLimits.Grpc</RootNamespace>
+    <AssemblyName>ConcurrencyLimits.Grpc</AssemblyName>
+    <Description>gRPC client and server interceptor integration for ConcurrencyLimits.</Description>
+  </PropertyGroup>
+
+  <ItemGroup>
+    <PackageReference Include="Grpc.Core.Api" Version="2.66.0" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <ProjectReference Include="../ConcurrencyLimits/ConcurrencyLimits.csproj" />
+  </ItemGroup>
+
+</Project>

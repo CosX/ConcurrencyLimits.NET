@@ -1,0 +1,7 @@
+ConcurrencyLimits (.NET)
+
+This product is a .NET port of Netflix concurrency-limits
+(https://github.com/Netflix/concurrency-limits).
+
+Original work Copyright 2018 Netflix, Inc., licensed under the
+Apache License, Version 2.0.

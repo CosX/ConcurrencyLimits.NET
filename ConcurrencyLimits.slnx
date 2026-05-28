@@ -1,0 +1,10 @@
+<Solution>
+  <Folder Name="/src/">
+    <Project Path="src/ConcurrencyLimits.AspNetCore/ConcurrencyLimits.AspNetCore.csproj" />
+    <Project Path="src/ConcurrencyLimits.Grpc/ConcurrencyLimits.Grpc.csproj" />
+    <Project Path="src/ConcurrencyLimits/ConcurrencyLimits.csproj" />
+  </Folder>
+  <Folder Name="/tests/">
+    <Project Path="tests/ConcurrencyLimits.Tests/ConcurrencyLimits.Tests.csproj" />
+  </Folder>
+</Solution>
