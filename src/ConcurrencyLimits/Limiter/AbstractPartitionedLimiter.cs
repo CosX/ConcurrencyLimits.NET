@@ -72,6 +72,7 @@ public abstract class AbstractPartitionedLimiter<TContext> : AbstractLimiter<TCo
     private readonly IReadOnlyList<Func<TContext, string?>> _partitionResolvers;
     private int _delayedThreads;
     private readonly int _maxDelayedThreads;
+    private readonly object _acquireLock = new();
 
     protected AbstractPartitionedLimiter(AbstractLimiterBuilder builder, IPartitionedBuilderState<TContext> state)
         : base(builder)
@@ -119,39 +120,33 @@ public abstract class AbstractPartitionedLimiter<TContext> : AbstractLimiter<TCo
 
         // The partition is not a hard limit. It is only applied if the global limit is exceeded.
         // This allows for excess capacity in each partition to allow bursting over the limit, but
-        // only if there is spare global capacity.
-        bool overLimit;
-        if (GetInflight() >= GetLimit())
+        // only if there is spare global capacity. The check, the partition increment and the
+        // inflight increment must be atomic, otherwise concurrent acquires transiently breach
+        // both the global and partition limits.
+        lock (_acquireLock)
         {
-            bool couldAcquire = partition.TryAcquire();
-            overLimit = !couldAcquire;
-        }
-        else
-        {
-            partition.Acquire();
-            overLimit = false;
-        }
-
-        if (overLimit)
-        {
-            if (partition.BackoffMillis > 0 && Volatile.Read(ref _delayedThreads) < _maxDelayedThreads)
+            if (GetInflight() < GetLimit() || !partition.IsLimitExceeded())
             {
-                try
-                {
-                    Interlocked.Increment(ref _delayedThreads);
-                    Thread.Sleep((int)partition.BackoffMillis);
-                }
-                finally
-                {
-                    Interlocked.Decrement(ref _delayedThreads);
-                }
+                partition.Acquire();
+                IListener acquired = CreateListener();
+                return new PartitionReleasingListener(acquired, partition);
             }
-
-            return CreateRejectedListener();
         }
 
-        IListener listener = CreateListener();
-        return new PartitionReleasingListener(listener, partition);
+        if (partition.BackoffMillis > 0 && Volatile.Read(ref _delayedThreads) < _maxDelayedThreads)
+        {
+            try
+            {
+                Interlocked.Increment(ref _delayedThreads);
+                Thread.Sleep((int)partition.BackoffMillis);
+            }
+            finally
+            {
+                Interlocked.Decrement(ref _delayedThreads);
+            }
+        }
+
+        return CreateRejectedListener();
     }
 
     protected override void OnNewLimit(int newLimit)

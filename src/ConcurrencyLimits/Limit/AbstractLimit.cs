@@ -10,10 +10,18 @@ public abstract class AbstractLimit : ILimit
 
     public void OnSample(long startTime, long rtt, int inflight, bool didDrop)
     {
+        Action<int>[]? snapshot = null;
+        int newLimit;
         lock (_sync)
         {
-            SetLimit(Update(startTime, rtt, inflight, didDrop));
+            newLimit = Update(startTime, rtt, inflight, didDrop);
+            if (newLimit != _limit)
+            {
+                _limit = newLimit;
+                snapshot = _listeners.ToArray();
+            }
         }
+        Dispatch(snapshot, newLimit);
     }
 
     protected abstract int Update(long startTime, long rtt, int inflight, bool didDrop);
@@ -22,27 +30,35 @@ public abstract class AbstractLimit : ILimit
 
     protected virtual void SetLimit(int newLimit)
     {
+        Action<int>[]? snapshot = null;
         lock (_sync)
         {
             if (newLimit != _limit)
             {
                 _limit = newLimit;
-                Action<int>[] snapshot;
-                lock (_listeners)
-                {
-                    snapshot = _listeners.ToArray();
-                }
-                foreach (var listener in snapshot)
-                {
-                    listener(newLimit);
-                }
+                snapshot = _listeners.ToArray();
             }
+        }
+        Dispatch(snapshot, newLimit);
+    }
+
+    // Dispatch outside _sync so listener callbacks (e.g. semaphore resize) can't stall
+    // algorithm state or invert lock order with downstream limiter locks.
+    private static void Dispatch(Action<int>[]? snapshot, int newLimit)
+    {
+        if (snapshot == null)
+        {
+            return;
+        }
+        foreach (var listener in snapshot)
+        {
+            listener(newLimit);
         }
     }
 
     public void NotifyOnChange(Action<int> consumer)
     {
-        lock (_listeners)
+        lock (_sync)
         {
             _listeners.Add(consumer);
         }

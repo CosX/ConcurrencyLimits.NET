@@ -16,6 +16,7 @@ public class SimpleLimiter<TContext> : AbstractLimiter<TContext>
 {
     private readonly IMetricRegistry.ISampleListener _inflightDistribution;
     private readonly AdjustableSemaphore _semaphore;
+    private readonly object _limitChangeLock = new();
 
     public SimpleLimiter(AbstractLimiterBuilder builder) : base(builder)
     {
@@ -45,16 +46,21 @@ public class SimpleLimiter<TContext> : AbstractLimiter<TContext>
 
     protected override void OnNewLimit(int newLimit)
     {
-        int oldLimit = GetLimit();
-        base.OnNewLimit(newLimit);
+        // Serialize the old/new read and the matching semaphore delta so concurrent
+        // limit changes can't compute deltas against a stale baseline and drift permits.
+        lock (_limitChangeLock)
+        {
+            int oldLimit = GetLimit();
+            base.OnNewLimit(newLimit);
 
-        if (newLimit > oldLimit)
-        {
-            _semaphore.Release(newLimit - oldLimit);
-        }
-        else
-        {
-            _semaphore.ReducePermits(oldLimit - newLimit);
+            if (newLimit > oldLimit)
+            {
+                _semaphore.Release(newLimit - oldLimit);
+            }
+            else
+            {
+                _semaphore.ReducePermits(oldLimit - newLimit);
+            }
         }
     }
 

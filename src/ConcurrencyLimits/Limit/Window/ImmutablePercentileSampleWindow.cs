@@ -1,5 +1,3 @@
-using System.Threading;
-
 namespace ConcurrencyLimits.Limit.Window;
 
 public sealed class ImmutablePercentileSampleWindow : ISampleWindow
@@ -38,12 +36,16 @@ public sealed class ImmutablePercentileSampleWindow : ISampleWindow
         {
             return this;
         }
-        Interlocked.Exchange(ref _observedRtts[_sampleCount], rtt);
+        // Copy-on-write: never mutate the shared backing array. A concurrent CAS loser
+        // in WindowedLimit retries with the original window, whose array must stay intact.
+        long[] newRtts = new long[_observedRtts.Length];
+        Array.Copy(_observedRtts, newRtts, _sampleCount);
+        newRtts[_sampleCount] = rtt;
         return new ImmutablePercentileSampleWindow(
             Math.Min(_minRtt, rtt),
             Math.Max(inflight, _maxInFlight),
             _didDrop || didDrop,
-            _observedRtts,
+            newRtts,
             _sampleCount + 1,
             _percentile);
     }
@@ -57,14 +59,11 @@ public sealed class ImmutablePercentileSampleWindow : ISampleWindow
             return 0;
         }
         long[] copy = new long[_sampleCount];
-        for (int i = 0; i < _sampleCount; i++)
-        {
-            copy[i] = Interlocked.Read(ref _observedRtts[i]);
-        }
+        Array.Copy(_observedRtts, copy, _sampleCount);
         Array.Sort(copy);
 
         int rttIndex = (int)Math.Floor(_sampleCount * _percentile + 0.5);
-        int zeroBasedRttIndex = rttIndex - 1;
+        int zeroBasedRttIndex = Math.Clamp(rttIndex - 1, 0, _sampleCount - 1);
         return copy[zeroBasedRttIndex];
     }
 

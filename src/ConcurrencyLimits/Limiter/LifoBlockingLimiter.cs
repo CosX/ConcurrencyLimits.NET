@@ -71,7 +71,6 @@ public sealed class LifoBlockingLimiter<TContext> : ILimiter<TContext>
     }
 
     private readonly LinkedList<ListenerHolder> _backlog = new();
-    private int _backlogCounter;
     private readonly int _backlogSize;
     private readonly Func<TContext, long> _backlogTimeoutMillis;
     private readonly long? _fixedBacklogTimeoutMillis;
@@ -96,37 +95,29 @@ public sealed class LifoBlockingLimiter<TContext> : ILimiter<TContext>
             return listener;
         }
 
-        // Restrict backlog size so the queue doesn't grow unbounded during an outage
-        if (Volatile.Read(ref _backlogCounter) >= _backlogSize)
-        {
-            return null;
-        }
-
-        Interlocked.Increment(ref _backlogCounter);
         ListenerHolder holder = new(context);
 
-        try
+        // Restrict backlog size so the queue doesn't grow unbounded during an outage.
+        // Check and enqueue atomically to avoid overshooting _backlogSize under concurrency.
+        lock (_lock)
+        {
+            if (_backlog.Count >= _backlogSize)
+            {
+                return null;
+            }
+            _backlog.AddFirst(holder);
+        }
+
+        if (!holder.Await(_backlogTimeoutMillis(context)))
         {
             lock (_lock)
             {
-                _backlog.AddFirst(holder);
+                RemoveLastOccurrence(holder);
             }
-
-            if (!holder.Await(_backlogTimeoutMillis(context)))
-            {
-                lock (_lock)
-                {
-                    RemoveLastOccurrence(holder);
-                }
-                // if we acquired a token just as we were timing out then return it
-                return holder.Listener;
-            }
+            // if we acquired a token just as we were timing out then return it
             return holder.Listener;
         }
-        finally
-        {
-            Interlocked.Decrement(ref _backlogCounter);
-        }
+        return holder.Listener;
     }
 
     private void RemoveLastOccurrence(ListenerHolder holder)

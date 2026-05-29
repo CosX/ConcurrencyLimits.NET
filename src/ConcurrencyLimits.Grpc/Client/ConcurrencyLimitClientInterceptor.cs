@@ -53,7 +53,17 @@ public sealed class ConcurrencyLimitClientInterceptor : Interceptor
     {
         IListener listener = Acquire(context.Method.FullName);
 
-        AsyncUnaryCall<TResponse> call = continuation(request, context);
+        AsyncUnaryCall<TResponse> call;
+        try
+        {
+            call = continuation(request, context);
+        }
+        catch
+        {
+            // continuation threw before producing a call; release the token we acquired.
+            listener.OnIgnore();
+            throw;
+        }
         Task<TResponse> responseAsync = HandleResponse(call.ResponseAsync, listener);
 
         return new AsyncUnaryCall<TResponse>(

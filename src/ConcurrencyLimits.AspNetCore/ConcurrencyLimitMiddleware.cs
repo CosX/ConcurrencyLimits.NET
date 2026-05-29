@@ -31,6 +31,12 @@ public sealed class ConcurrencyLimitMiddleware
                 await _next(context);
                 listener.OnSuccess();
             }
+            catch (OperationCanceledException) when (context.RequestAborted.IsCancellationRequested)
+            {
+                // Client aborted / timed out: a real drop the algorithm must see, not an ignore.
+                listener.OnDropped();
+                throw;
+            }
             catch
             {
                 listener.OnIgnore();

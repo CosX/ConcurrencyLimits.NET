@@ -41,21 +41,6 @@ public sealed class Partition(string name)
         _inflightDistribution.AddLongSample(nowBusy);
     }
 
-    internal bool TryAcquire()
-    {
-        int current = Volatile.Read(ref _busy);
-        while (current < _limit)
-        {
-            if (Interlocked.CompareExchange(ref _busy, current + 1, current) == current)
-            {
-                _inflightDistribution.AddLongSample(current + 1);
-                return true;
-            }
-            current = Volatile.Read(ref _busy);
-        }
-        return false;
-    }
-
     internal void Release() => Interlocked.Decrement(ref _busy);
 
     public int GetLimit() => _limit;
