@@ -18,6 +18,7 @@
   <ItemGroup>
     <ProjectReference Include="../../src/ConcurrencyLimits/ConcurrencyLimits.csproj" />
     <ProjectReference Include="../../src/ConcurrencyLimits.AspNetCore/ConcurrencyLimits.AspNetCore.csproj" />
+    <ProjectReference Include="../../src/ConcurrencyLimits.Polly/ConcurrencyLimits.Polly.csproj" />
   </ItemGroup>
 
 </Project>

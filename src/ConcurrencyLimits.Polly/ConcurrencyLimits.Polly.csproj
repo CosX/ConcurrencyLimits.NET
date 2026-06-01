@@ -1,0 +1,17 @@
+<Project Sdk="Microsoft.NET.Sdk">
+
+  <PropertyGroup>
+    <RootNamespace>ConcurrencyLimits.Polly</RootNamespace>
+    <AssemblyName>ConcurrencyLimits.Polly</AssemblyName>
+    <Description>Polly v8 resilience pipeline integration for ConcurrencyLimits.</Description>
+  </PropertyGroup>
+
+  <ItemGroup>
+    <PackageReference Include="Polly.Core" Version="8.5.2" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <ProjectReference Include="../ConcurrencyLimits/ConcurrencyLimits.csproj" />
+  </ItemGroup>
+
+</Project>
