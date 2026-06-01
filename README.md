@@ -13,6 +13,7 @@ Targets `net10.0`.
 | `ConcurrencyLimits` | Core algorithms and limiters. No transport dependencies. |
 | `ConcurrencyLimits.AspNetCore` | Request-pipeline middleware that returns 429 when the limit is reached. |
 | `ConcurrencyLimits.Grpc` | gRPC server and client interceptors (unary calls). |
+| `ConcurrencyLimits.Polly` | Polly v8 resilience strategy that gates executions through a limiter. |
 
 ## Install
 
@@ -20,6 +21,7 @@ Targets `net10.0`.
 dotnet add package ConcurrencyLimits              # core algorithms and limiters
 dotnet add package ConcurrencyLimits.AspNetCore   # ASP.NET Core middleware
 dotnet add package ConcurrencyLimits.Grpc         # gRPC interceptors
+dotnet add package ConcurrencyLimits.Polly        # Polly v8 resilience strategy
 ```
 
 Or via `PackageReference`:
@@ -145,6 +147,44 @@ var clientInterceptor = new ConcurrencyLimitClientInterceptor(clientLimiter);
 ```
 
 Only unary calls are limited (matching the Java implementation); streaming calls pass through. Rejected calls return `StatusCode.Unavailable`.
+
+## Polly
+
+Add an adaptive concurrency gate to any Polly v8 `ResiliencePipeline`. Acquire/release happens around the inner callback; successful runs feed RTT samples back into the limit algorithm.
+
+```csharp
+using ConcurrencyLimits.Limit;
+using ConcurrencyLimits.Polly;
+using Polly;
+
+ILimiter<ResilienceContext> limiter = new ResilienceContextLimiterBuilder()
+    .WithLimit(Gradient2Limit.NewDefault())
+    .PartitionByOperationKey()
+    .AddPartition("checkout", 0.7)
+    .AddPartition("search", 0.3)
+    .Build();
+
+ResiliencePipeline pipeline = new ResiliencePipelineBuilder()
+    .AddConcurrencyLimit(limiter)
+    .AddRetry(new() { MaxRetryAttempts = 2 })
+    .Build();
+
+var ctx = ResilienceContextPool.Shared.Get("checkout");
+try
+{
+    var result = await pipeline.ExecuteAsync(static async c => await CallDownstreamAsync(c.CancellationToken), ctx);
+}
+catch (ConcurrencyLimitRejectedException)
+{
+    // limiter shed the request — fall back / return 503 / etc.
+}
+finally
+{
+    ResilienceContextPool.Shared.Return(ctx);
+}
+```
+
+Customize the rejection exception via `ConcurrencyLimitStrategyOptions.RejectionExceptionFactory` (e.g. throw `BrokenCircuitException` so a downstream `Retry` or `Fallback` strategy reacts to it).
 
 ## Metrics
 
