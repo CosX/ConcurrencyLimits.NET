@@ -34,7 +34,7 @@ public sealed class ConcurrencyLimitClientInterceptor : Interceptor
             listener.OnSuccess();
             return response;
         }
-        catch (RpcException ex) when (ex.StatusCode == StatusCode.Unavailable)
+        catch (RpcException ex) when (ex.StatusCode is StatusCode.Unavailable or StatusCode.DeadlineExceeded or StatusCode.Cancelled)
         {
             listener.OnDropped();
             throw;
@@ -85,7 +85,7 @@ public sealed class ConcurrencyLimitClientInterceptor : Interceptor
             listener.OnSuccess();
             return response;
         }
-        catch (RpcException ex) when (ex.StatusCode == StatusCode.Unavailable)
+        catch (RpcException ex) when (ex.StatusCode is StatusCode.Unavailable or StatusCode.DeadlineExceeded or StatusCode.Cancelled)
         {
             listener.OnDropped();
             throw;

@@ -208,9 +208,27 @@ public sealed class GradientLimit : AbstractLimit
         return (int)_estimatedLimit;
     }
 
-    public long GetLastRttNanos() => _lastRtt;
+    public long GetLastRttNanos()
+    {
+        lock (SyncRoot)
+        {
+            return _lastRtt;
+        }
+    }
 
-    public long GetRttNoLoadNanos() => (long)_rttNoLoadMeasurement.Get();
+    public long GetRttNoLoadNanos()
+    {
+        lock (SyncRoot)
+        {
+            return (long)_rttNoLoadMeasurement.Get();
+        }
+    }
 
-    public override string ToString() => $"GradientLimit [limit={(int)_estimatedLimit}, rtt_noload={GetRttNoLoadNanos() / 1e6} ms]";
+    public override string ToString()
+    {
+        lock (SyncRoot)
+        {
+            return $"GradientLimit [limit={(int)_estimatedLimit}, rtt_noload={(long)_rttNoLoadMeasurement.Get() / 1e6} ms]";
+        }
+    }
 }

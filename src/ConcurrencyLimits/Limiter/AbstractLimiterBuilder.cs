@@ -11,13 +11,17 @@ public abstract class AbstractLimiterBuilder
 {
     internal ILimit Limit = VegasLimit.NewDefault();
     internal Func<long> Clock = SystemNanoTime.Now;
-    internal string Name = "unnamed-" + Interlocked.Increment(ref _idCounter);
+    internal string? Name;
     internal IMetricRegistry Registry = EmptyMetricRegistry.Instance;
 
     internal static readonly Func<object?, bool> AlwaysFalse = _ => false;
     internal Func<object?, bool> BypassResolver = AlwaysFalse;
 
     private static int _idCounter;
+
+    /// <summary>Resolve the limiter name, allocating an "unnamed-N" id lazily at build time so
+    /// ids reflect actual limiters built, not every builder instantiated.</summary>
+    internal string ResolveName() => Name ??= "unnamed-" + Interlocked.Increment(ref _idCounter);
 }
 
 public abstract class AbstractLimiterBuilder<TBuilder> : AbstractLimiterBuilder

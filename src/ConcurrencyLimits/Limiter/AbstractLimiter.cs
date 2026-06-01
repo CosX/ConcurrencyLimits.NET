@@ -36,12 +36,13 @@ public abstract class AbstractLimiter<TContext> : ILimiter<TContext>
         _limitAlgorithm.NotifyOnChange(OnNewLimit);
         _bypassResolver = builder.BypassResolver;
 
+        string name = builder.ResolveName();
         builder.Registry.Gauge(MetricIds.LimitName, () => GetLimit());
-        _successCounter = builder.Registry.Counter(MetricIds.CallName, IdTag, builder.Name, StatusTag, "success");
-        _droppedCounter = builder.Registry.Counter(MetricIds.CallName, IdTag, builder.Name, StatusTag, "dropped");
-        _ignoredCounter = builder.Registry.Counter(MetricIds.CallName, IdTag, builder.Name, StatusTag, "ignored");
-        _rejectedCounter = builder.Registry.Counter(MetricIds.CallName, IdTag, builder.Name, StatusTag, "rejected");
-        _bypassCounter = builder.Registry.Counter(MetricIds.CallName, IdTag, builder.Name, StatusTag, "bypassed");
+        _successCounter = builder.Registry.Counter(MetricIds.CallName, IdTag, name, StatusTag, "success");
+        _droppedCounter = builder.Registry.Counter(MetricIds.CallName, IdTag, name, StatusTag, "dropped");
+        _ignoredCounter = builder.Registry.Counter(MetricIds.CallName, IdTag, name, StatusTag, "ignored");
+        _rejectedCounter = builder.Registry.Counter(MetricIds.CallName, IdTag, name, StatusTag, "rejected");
+        _bypassCounter = builder.Registry.Counter(MetricIds.CallName, IdTag, name, StatusTag, "bypassed");
     }
 
     public abstract IListener? Acquire(TContext context);

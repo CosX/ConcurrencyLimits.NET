@@ -32,7 +32,7 @@ public sealed class BlockingLimiter<TContext> : ILimiter<TContext>
     /// </summary>
     public static BlockingLimiter<TContext> Wrap(ILimiter<TContext> delegateLimiter, TimeSpan timeout)
     {
-        Preconditions.CheckArgument(timeout < MaxTimeout, "Timeout cannot be greater than " + MaxTimeout);
+        Preconditions.CheckArgument(timeout <= MaxTimeout, "Timeout cannot be greater than " + MaxTimeout);
         return new BlockingLimiter<TContext>(delegateLimiter, timeout);
     }
 

@@ -6,6 +6,10 @@ public abstract class AbstractLimit : ILimit
     private readonly List<Action<int>> _listeners = new();
     private readonly object _sync = new();
 
+    /// <summary>Lock guarding algorithm state. Subclasses must hold this when reading mutable
+    /// state outside <see cref="Update"/> (e.g. in accessors or ToString) to avoid torn reads.</summary>
+    protected object SyncRoot => _sync;
+
     protected AbstractLimit(int initialLimit) => _limit = initialLimit;
 
     public void OnSample(long startTime, long rtt, int inflight, bool didDrop)

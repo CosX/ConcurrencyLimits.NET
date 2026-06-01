@@ -78,7 +78,7 @@ public abstract class AbstractPartitionedLimiter<TContext> : AbstractLimiter<TCo
         : base(builder)
     {
         Preconditions.CheckArgument(state.Partitions.Count != 0, "No partitions specified");
-        Preconditions.CheckArgument(state.Partitions.Values.Sum(p => p.GetPercent()) <= 1.0,
+        Preconditions.CheckArgument(state.Partitions.Values.Sum(p => p.GetPercent()) <= 1.0 + 1e-9,
             "Sum of percentages must be <= 1.0");
 
         _partitions = new Dictionary<string, Partition>(state.Partitions);

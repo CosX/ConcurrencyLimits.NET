@@ -99,7 +99,7 @@ public sealed class WindowedLimit : ILimit
             {
                 try
                 {
-                    if (endTime > _nextUpdateTime)
+                    if (endTime > Volatile.Read(ref _nextUpdateTime))
                     {
                         ISampleWindow current = Interlocked.Exchange(ref _sample, _sampleWindowFactory.NewInstance());
                         Volatile.Write(ref _nextUpdateTime,

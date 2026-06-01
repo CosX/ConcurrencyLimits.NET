@@ -43,7 +43,7 @@ public sealed class ConcurrencyLimitMiddleware
                 throw;
             }
         }
-        else
+        else if (!context.Response.HasStarted)
         {
             context.Response.StatusCode = _throttleStatus;
             await context.Response.WriteAsync("Concurrency limit exceeded");

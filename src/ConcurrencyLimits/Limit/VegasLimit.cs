@@ -240,5 +240,11 @@ public class VegasLimit : AbstractLimit
         return (int)newLimit;
     }
 
-    public override string ToString() => $"VegasLimit [limit={GetLimit()}, rtt_noload={_rttNoLoad / 1e6} ms]";
+    public override string ToString()
+    {
+        lock (SyncRoot)
+        {
+            return $"VegasLimit [limit={GetLimit()}, rtt_noload={_rttNoLoad / 1e6} ms]";
+        }
+    }
 }
