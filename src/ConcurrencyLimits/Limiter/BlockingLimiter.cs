@@ -67,9 +67,9 @@ public sealed class BlockingLimiter<TContext> : ILimiter<TContext>
     {
         lock (_lock)
         {
-            // One token freed wakes one waiter; PulseAll causes a thundering herd that
-            // all re-contend on _lock only for one to win.
-            Monitor.Pulse(_lock);
+            // PulseAll, mirroring Java's notifyAll: a single Pulse is consumed by a waiter whose
+            // deadline already expired, losing the wakeup while other waiters sleep on a free token.
+            Monitor.PulseAll(_lock);
         }
     }
 
