@@ -102,22 +102,41 @@ public class SimpleLimiter<TContext> : AbstractLimiter<TContext>
 
     private sealed class ReleasingListener(SimpleLimiter<TContext> limiter, IListener delegateListener) : IListener
     {
+        // Release in finally: a throwing limit algorithm must not leak the permit.
         public void OnSuccess()
         {
-            delegateListener.OnSuccess();
-            limiter._semaphore.Release();
+            try
+            {
+                delegateListener.OnSuccess();
+            }
+            finally
+            {
+                limiter._semaphore.Release();
+            }
         }
 
         public void OnIgnore()
         {
-            delegateListener.OnIgnore();
-            limiter._semaphore.Release();
+            try
+            {
+                delegateListener.OnIgnore();
+            }
+            finally
+            {
+                limiter._semaphore.Release();
+            }
         }
 
         public void OnDropped()
         {
-            delegateListener.OnDropped();
-            limiter._semaphore.Release();
+            try
+            {
+                delegateListener.OnDropped();
+            }
+            finally
+            {
+                limiter._semaphore.Release();
+            }
         }
     }
 }

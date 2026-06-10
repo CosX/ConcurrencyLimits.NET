@@ -79,6 +79,26 @@ public class SimpleLimiterTest
     }
 
     [Fact]
+    public void ThrowingLimitAlgorithmDoesNotLeakPermit()
+    {
+        var limiter = SimpleLimiter.NewBuilder().WithLimit(new ThrowingLimit(1)).Build<string>();
+
+        IListener listener = limiter.Acquire("live")!;
+        Assert.Throws<InvalidOperationException>(listener.OnSuccess);
+
+        // Permit must have been released despite the algorithm throwing.
+        Assert.NotNull(limiter.Acquire("live"));
+    }
+
+    private sealed class ThrowingLimit(int limit) : ILimit
+    {
+        public int GetLimit() => limit;
+        public void NotifyOnChange(Action<int> consumer) { }
+        public void OnSample(long startTime, long rtt, int inflight, bool didDrop)
+            => throw new InvalidOperationException("algorithm failure");
+    }
+
+    [Fact]
     public void TestConcurrentSimple()
     {
         const int threadCount = 100;

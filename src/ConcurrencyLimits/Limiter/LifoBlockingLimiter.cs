@@ -160,22 +160,41 @@ public sealed class LifoBlockingLimiter<TContext> : ILimiter<TContext>
 
     private sealed class UnblockingListener(IListener listener, Action unblock) : IListener
     {
+        // Unblock in finally: a throwing delegate must not strand backlogged waiters.
         public void OnSuccess()
         {
-            listener.OnSuccess();
-            unblock();
+            try
+            {
+                listener.OnSuccess();
+            }
+            finally
+            {
+                unblock();
+            }
         }
 
         public void OnIgnore()
         {
-            listener.OnIgnore();
-            unblock();
+            try
+            {
+                listener.OnIgnore();
+            }
+            finally
+            {
+                unblock();
+            }
         }
 
         public void OnDropped()
         {
-            listener.OnDropped();
-            unblock();
+            try
+            {
+                listener.OnDropped();
+            }
+            finally
+            {
+                unblock();
+            }
         }
     }
 }

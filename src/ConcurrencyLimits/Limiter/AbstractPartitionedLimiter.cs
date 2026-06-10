@@ -162,22 +162,41 @@ public abstract class AbstractPartitionedLimiter<TContext> : AbstractLimiter<TCo
 
     private sealed class PartitionReleasingListener(IListener listener, Partition partition) : IListener
     {
+        // Release in finally: a throwing limit algorithm must not leak the partition slot.
         public void OnSuccess()
         {
-            listener.OnSuccess();
-            partition.Release();
+            try
+            {
+                listener.OnSuccess();
+            }
+            finally
+            {
+                partition.Release();
+            }
         }
 
         public void OnIgnore()
         {
-            listener.OnIgnore();
-            partition.Release();
+            try
+            {
+                listener.OnIgnore();
+            }
+            finally
+            {
+                partition.Release();
+            }
         }
 
         public void OnDropped()
         {
-            listener.OnDropped();
-            partition.Release();
+            try
+            {
+                listener.OnDropped();
+            }
+            finally
+            {
+                partition.Release();
+            }
         }
     }
 }
