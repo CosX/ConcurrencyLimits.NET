@@ -62,6 +62,7 @@ public sealed class Gradient2Limit : AbstractLimit
 
         public Builder Smoothing(double smoothing)
         {
+            Preconditions.CheckArgument(smoothing > 0.0 && smoothing <= 1.0, "Smoothing must be in the range (0.0, 1.0]");
             SmoothingValue = smoothing;
             return this;
         }

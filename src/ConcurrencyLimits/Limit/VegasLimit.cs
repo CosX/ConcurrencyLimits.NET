@@ -35,6 +35,7 @@ public class VegasLimit : AbstractLimit
         /// </summary>
         public Builder ProbeMultiplier(int probeMultiplier)
         {
+            Preconditions.CheckArgument(probeMultiplier > 0, "Probe multiplier must be > 0");
             ProbeMultiplierValue = probeMultiplier;
             return this;
         }
@@ -83,6 +84,7 @@ public class VegasLimit : AbstractLimit
 
         public Builder Smoothing(double smoothing)
         {
+            Preconditions.CheckArgument(smoothing > 0.0 && smoothing <= 1.0, "Smoothing must be in the range (0.0, 1.0]");
             SmoothingValue = smoothing;
             return this;
         }

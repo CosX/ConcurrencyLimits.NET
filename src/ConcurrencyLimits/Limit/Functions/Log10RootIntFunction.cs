@@ -16,7 +16,9 @@ public static class Log10RootIntFunction
         }
     }
 
-    public static int Apply(int t) => t < 1000 ? Lookup[t] : (int)Math.Log10(t);
+    // Clamp negatives to 0: custom limit functions can momentarily produce values below
+    // zero and must not turn that into an IndexOutOfRangeException.
+    public static int Apply(int t) => t < 1000 ? Lookup[Math.Max(0, t)] : (int)Math.Log10(t);
 
     /// <summary>Create a function that returns <c>log10(limit) + baseline</c>.</summary>
     public static Func<int, int> Create(int baseline)

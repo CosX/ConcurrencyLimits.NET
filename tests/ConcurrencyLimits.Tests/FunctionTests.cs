@@ -13,6 +13,9 @@ public class SquareRootFunctionTest
 
     [Fact]
     public void ConfirmOutOfLookupRange() => Assert.Equal(50, SquareRootFunction.Create(4)(2500));
+
+    [Fact]
+    public void NegativeInputClampsToZeroIndex() => Assert.Equal(4, SquareRootFunction.Create(4)(-5));
 }
 
 #pragma warning disable CS0618
@@ -39,4 +42,7 @@ public class Log10RootIntFunctionTest
 
     [Fact]
     public void TestOutOfLookupRange() => Assert.Equal(4, Log10RootIntFunction.Create(0)(10000));
+
+    [Fact]
+    public void NegativeInputClampsToZeroIndex() => Assert.Equal(1, Log10RootIntFunction.Create(0)(-5));
 }
