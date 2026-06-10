@@ -105,10 +105,9 @@ public class SimpleLimiterTest
         const int iterations = 1000;
         const int limit = 10;
 
-        var limiter = (SimpleLimiter<string>)PartitionedLimiter.NewBuilder<string>()
+        var limiter = SimpleLimiter.NewBuilder()
             .WithLimit(FixedLimit.Of(limit))
-            .AddPartition("default", 1.0)
-            .Build();
+            .Build<string>();
 
         var startLatch = new ManualResetEventSlim(false);
         int successCount = 0;

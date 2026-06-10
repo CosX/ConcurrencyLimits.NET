@@ -37,6 +37,12 @@ public abstract class AbstractPartitionedLimiter<TContext> : AbstractLimiter<TCo
             return Self();
         }
 
+        /// <summary>
+        /// Delay rejections for the partition by the given duration, smoothing out retry storms.
+        /// <para>WARNING: the delay blocks the calling thread (<see cref="Thread.Sleep(int)"/>).
+        /// In async hosts such as ASP.NET Core this parks thread-pool threads precisely when the
+        /// system is overloaded; prefer leaving this unset and delaying asynchronously in the caller.</para>
+        /// </summary>
         public TBuilder PartitionRejectDelay(string name, TimeSpan duration)
         {
             GetOrCreate(name).SetBackoffMillis((long)duration.TotalMilliseconds);
@@ -45,6 +51,7 @@ public abstract class AbstractPartitionedLimiter<TContext> : AbstractLimiter<TCo
 
         public TBuilder MaxDelayedThreads(int maxDelayedThreads)
         {
+            Preconditions.CheckArgument(maxDelayedThreads >= 0, "Max delayed threads must be >= 0");
             _maxDelayedThreads = maxDelayedThreads;
             return Self();
         }
@@ -62,9 +69,17 @@ public abstract class AbstractPartitionedLimiter<TContext> : AbstractLimiter<TCo
         protected bool HasPartitions() => _partitions.Count != 0;
 
         public ILimiter<TContext> Build()
-            => HasPartitions() && _partitionResolvers.Count != 0
+        {
+            // Half-configured partitioning silently degraded to a SimpleLimiter before; fail loudly instead.
+            Preconditions.CheckState(HasPartitions() == (_partitionResolvers.Count != 0),
+                HasPartitions()
+                    ? "Partitions are configured but no partition resolver was provided"
+                    : "A partition resolver is configured but no partitions were added");
+
+            return HasPartitions()
                 ? new DefaultPartitionedLimiter<TContext>(this, this)
                 : new SimpleLimiter<TContext>(this);
+        }
     }
 
     private readonly Dictionary<string, Partition> _partitions;
@@ -138,7 +153,7 @@ public abstract class AbstractPartitionedLimiter<TContext> : AbstractLimiter<TCo
             try
             {
                 Interlocked.Increment(ref _delayedThreads);
-                Thread.Sleep((int)partition.BackoffMillis);
+                Thread.Sleep((int)Math.Clamp(partition.BackoffMillis, 0, int.MaxValue));
             }
             finally
             {
