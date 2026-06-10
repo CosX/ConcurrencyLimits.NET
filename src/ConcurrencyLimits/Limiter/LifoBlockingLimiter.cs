@@ -1,3 +1,5 @@
+using ConcurrencyLimits.Internal;
+
 namespace ConcurrencyLimits.Limiter;
 
 /// <summary>
@@ -23,6 +25,7 @@ public sealed class LifoBlockingLimiter<TContext> : ILimiter<TContext>
         /// <summary>Set maximum number of blocked threads. Default is 100.</summary>
         public Builder BacklogSize(int size)
         {
+            Preconditions.CheckArgument(size > 0, "Backlog size must be > 0");
             MaxBacklogSizeValue = size;
             return this;
         }
@@ -61,13 +64,19 @@ public sealed class LifoBlockingLimiter<TContext> : ILimiter<TContext>
         public IListener? Listener;
         public readonly TContext Context = context;
 
-        public bool Await(long timeoutMillis) => _latch.Wait((int)timeoutMillis);
+        // Clamp: context-derived timeouts (e.g. deadline - now) can be negative or exceed
+        // int.MaxValue; ManualResetEventSlim.Wait throws on values below -1 and the raw
+        // cast would overflow. 0 polls the latch without blocking.
+        public bool Await(long timeoutMillis) => _latch.Wait((int)Math.Clamp(timeoutMillis, 0, int.MaxValue));
 
         public void Set(IListener? listener)
         {
             Listener = listener;
             _latch.Set();
         }
+
+        /// <summary>Only call once the holder is unreachable from the backlog — no Set can race the dispose.</summary>
+        public void DisposeLatch() => _latch.Dispose();
     }
 
     private readonly LinkedList<ListenerHolder> _backlog = new();
@@ -114,9 +123,11 @@ public sealed class LifoBlockingLimiter<TContext> : ILimiter<TContext>
             {
                 RemoveLastOccurrence(holder);
             }
+            holder.DisposeLatch();
             // if we acquired a token just as we were timing out then return it
             return holder.Listener;
         }
+        holder.DisposeLatch();
         return holder.Listener;
     }
 
