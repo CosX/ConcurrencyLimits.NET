@@ -64,6 +64,8 @@ public sealed class BlockingAdaptiveExecutor
                 .MetricRegistry(MetricRegistry)
                 .WithLimit(AIMDLimit.NewBuilder().Build())
                 .Build<object?>();
+            // Wrap so builder-built executors block like the constructor paths do, instead of fast-failing.
+            Limiter = EnsureBlocking(Limiter);
             return new BlockingAdaptiveExecutor(this);
         }
     }
@@ -83,13 +85,16 @@ public sealed class BlockingAdaptiveExecutor
     /// Wrap a non-blocking limiter so callers block until a permit is available, scheduling work on the thread pool.
     /// </summary>
     public BlockingAdaptiveExecutor(ILimiter<object?> limiter)
-        : this(BlockingLimiter<object?>.Wrap(limiter), command => ThreadPool.QueueUserWorkItem(_ => command())) { }
+        : this(limiter, command => ThreadPool.QueueUserWorkItem(_ => command())) { }
 
     public BlockingAdaptiveExecutor(ILimiter<object?> limiter, Action<Action> executor)
     {
-        _limiter = BlockingLimiter<object?>.Wrap(limiter);
+        _limiter = EnsureBlocking(limiter);
         _executor = executor;
     }
+
+    private static ILimiter<object?> EnsureBlocking(ILimiter<object?> limiter)
+        => limiter is BlockingLimiter<object?> ? limiter : BlockingLimiter<object?>.Wrap(limiter);
 
     public void Execute(Action command)
     {
