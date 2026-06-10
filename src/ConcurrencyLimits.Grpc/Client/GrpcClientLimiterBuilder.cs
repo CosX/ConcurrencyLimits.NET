@@ -25,6 +25,9 @@ public sealed class GrpcClientLimiterBuilder
     /// <summary>
     /// When set to true new calls will block when the limit has been reached instead of failing fast
     /// with an Unavailable status.
+    /// <para>WARNING: blocking is synchronous and also applies to async calls — the calling thread is
+    /// parked (up to <see cref="BlockingLimiter{TContext}.MaxTimeout"/>) inside <c>AsyncUnaryCall</c>.
+    /// Avoid in thread-pool-bound async applications.</para>
     /// </summary>
     public GrpcClientLimiterBuilder BlockOnLimit(bool blockOnLimit)
     {

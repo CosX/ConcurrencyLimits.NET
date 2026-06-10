@@ -8,6 +8,12 @@ namespace ConcurrencyLimits.Grpc.Server;
 /// <see cref="Interceptor"/> that enforces per service and/or per method concurrent request limits and returns
 /// <see cref="StatusCode.Unavailable"/> when the limit has been reached. Only unary calls are limited.
 /// </summary>
+/// <remarks>
+/// Outcome mapping: success feeds an RTT sample; <see cref="StatusCode.DeadlineExceeded"/> and
+/// <see cref="StatusCode.Cancelled"/> are reported as drops (deliberate deviation from the Java library,
+/// which ignores cancellations — a client giving up is treated here as a latency signal the algorithm
+/// must see); all other failures are ignored.
+/// </remarks>
 public sealed class ConcurrencyLimitServerInterceptor : Interceptor
 {
     private static readonly Status LimitExceededStatus =
