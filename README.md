@@ -49,11 +49,14 @@ dotnet test
 | `LimitAlgorithmBenchmarks` | Per-sample `OnSample` cost of each limit algorithm on a replayed RTT trace |
 | `SampleWindowBenchmarks` | Filling an average vs. percentile sample window of 10/100/1000 samples |
 | `IntegrationBenchmarks` | Overhead of the ASP.NET Core middleware and the Polly strategy |
+| `ClockBenchmarks` | Cost of the nano clock read twice per acquire/release |
 
 ```bash
 dotnet run -c Release --project benchmarks/ConcurrencyLimits.Benchmarks -- --filter '*'                    # everything
 dotnet run -c Release --project benchmarks/ConcurrencyLimits.Benchmarks -- --filter '*GateThroughput*' --job short
 ```
+
+A results snapshot lives in [`benchmarks/results`](benchmarks/results).
 
 ## Core concepts
 
