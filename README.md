@@ -39,6 +39,22 @@ dotnet build
 dotnet test
 ```
 
+## Benchmarks
+
+`benchmarks/ConcurrencyLimits.Benchmarks` is a [BenchmarkDotNet](https://benchmarkdotnet.org) suite:
+
+| Class | Measures |
+| --- | --- |
+| `GateThroughputBenchmarks` | One acquire + `OnSuccess` round trip per limiter configuration at 1/2/4 threads, against `SemaphoreSlim` and `System.Threading.RateLimiting.ConcurrencyLimiter` |
+| `LimitAlgorithmBenchmarks` | Per-sample `OnSample` cost of each limit algorithm on a replayed RTT trace |
+| `SampleWindowBenchmarks` | Filling an average vs. percentile sample window of 10/100/1000 samples |
+| `IntegrationBenchmarks` | Overhead of the ASP.NET Core middleware and the Polly strategy |
+
+```bash
+dotnet run -c Release --project benchmarks/ConcurrencyLimits.Benchmarks -- --filter '*'                    # everything
+dotnet run -c Release --project benchmarks/ConcurrencyLimits.Benchmarks -- --filter '*GateThroughput*' --job short
+```
+
 ## Core concepts
 
 - **`ILimit`** — the algorithm that computes a concurrency number from RTT samples (`Vegas`, `Gradient`, `Gradient2`, `AIMD`, `Fixed`, `Settable`, `WindowedLimit`).

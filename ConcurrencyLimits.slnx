@@ -1,4 +1,7 @@
 <Solution>
+  <Folder Name="/benchmarks/">
+    <Project Path="benchmarks/ConcurrencyLimits.Benchmarks/ConcurrencyLimits.Benchmarks.csproj" />
+  </Folder>
   <Folder Name="/src/">
     <Project Path="src/ConcurrencyLimits.AspNetCore/ConcurrencyLimits.AspNetCore.csproj" />
     <Project Path="src/ConcurrencyLimits.Grpc/ConcurrencyLimits.Grpc.csproj" />

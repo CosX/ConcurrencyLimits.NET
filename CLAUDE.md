@@ -15,6 +15,7 @@ dotnet build                              # build whole solution
 dotnet test                               # run all tests (xUnit)
 dotnet test --filter "FullyQualifiedName~LimitTests"        # one test class
 dotnet test --filter "FullyQualifiedName~LimitTests.IncreaseLimit"  # one test
+dotnet run -c Release --project benchmarks/ConcurrencyLimits.Benchmarks -- --filter '*'  # BenchmarkDotNet suite (add --job short for a quick pass)
 ```
 
 Single-project build: `dotnet build src/ConcurrencyLimits/ConcurrencyLimits.csproj` (msbuild takes ONE project arg — don't pass two paths).
