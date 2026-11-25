@@ -99,31 +99,40 @@ public sealed class BlockingAdaptiveExecutor
     public void Execute(Action command)
     {
         IListener listener = _limiter.Acquire(null) ?? throw new RejectedExecutionException();
+        int started = 0;
         try
         {
             _executor(() =>
             {
+                Volatile.Write(ref started, 1);
                 try
                 {
                     command();
-                    listener.OnSuccess();
                 }
                 catch (UncheckedTimeoutException)
                 {
                     listener.OnDropped();
+                    return;
                 }
                 catch (RejectedExecutionException)
                 {
                     listener.OnDropped();
+                    return;
                 }
                 catch (Exception)
                 {
                     // Unknown cause; the only sane thing to do is ignore this request.
                     listener.OnIgnore();
+                    return;
                 }
+
+                // Outside the try so a throwing OnSuccess can't be followed by OnIgnore (double release).
+                listener.OnSuccess();
             });
         }
-        catch (Exception)
+        // Only release here if the work never ran. An executor that runs work inline would
+        // otherwise surface a throwing OnSuccess here and release the token a second time.
+        catch (Exception) when (Volatile.Read(ref started) == 0)
         {
             listener.OnIgnore();
             throw;

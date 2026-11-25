@@ -34,11 +34,10 @@ public sealed class ConcurrencyLimitClientInterceptor : Interceptor
     {
         IListener listener = Acquire(context.Method.FullName);
 
+        TResponse response;
         try
         {
-            TResponse response = continuation(request, context);
-            listener.OnSuccess();
-            return response;
+            response = continuation(request, context);
         }
         catch (RpcException ex) when (ex.StatusCode is StatusCode.Unavailable or StatusCode.DeadlineExceeded or StatusCode.Cancelled)
         {
@@ -50,6 +49,10 @@ public sealed class ConcurrencyLimitClientInterceptor : Interceptor
             listener.OnIgnore();
             throw;
         }
+
+        // Outside the try so a throwing OnSuccess can't be followed by OnIgnore (double release).
+        listener.OnSuccess();
+        return response;
     }
 
     public override AsyncUnaryCall<TResponse> AsyncUnaryCall<TRequest, TResponse>(
@@ -85,11 +88,10 @@ public sealed class ConcurrencyLimitClientInterceptor : Interceptor
 
     private static async Task<TResponse> HandleResponse<TResponse>(Task<TResponse> inner, IListener listener)
     {
+        TResponse response;
         try
         {
-            TResponse response = await inner;
-            listener.OnSuccess();
-            return response;
+            response = await inner;
         }
         catch (RpcException ex) when (ex.StatusCode is StatusCode.Unavailable or StatusCode.DeadlineExceeded or StatusCode.Cancelled)
         {
@@ -101,5 +103,9 @@ public sealed class ConcurrencyLimitClientInterceptor : Interceptor
             listener.OnIgnore();
             throw;
         }
+
+        // Outside the try so a throwing OnSuccess can't be followed by OnIgnore (double release).
+        listener.OnSuccess();
+        return response;
     }
 }

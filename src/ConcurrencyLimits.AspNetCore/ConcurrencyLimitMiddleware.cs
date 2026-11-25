@@ -29,7 +29,6 @@ public sealed class ConcurrencyLimitMiddleware
             try
             {
                 await _next(context);
-                listener.OnSuccess();
             }
             catch (OperationCanceledException) when (context.RequestAborted.IsCancellationRequested)
             {
@@ -42,6 +41,10 @@ public sealed class ConcurrencyLimitMiddleware
                 listener.OnIgnore();
                 throw;
             }
+
+            // Outside the try: if OnSuccess itself throws, the catch above would release the
+            // token a second time (OnIgnore after OnSuccess), inflating permits.
+            listener.OnSuccess();
         }
         else if (!context.Response.HasStarted)
         {
