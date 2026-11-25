@@ -26,7 +26,7 @@ public sealed class ResilienceContextLimiterBuilder
 
     /// <summary>Bypass the limit when the predicate evaluates to true for the context.</summary>
     public ResilienceContextLimiterBuilder BypassLimitResolver(Func<ResilienceContext, bool> shouldBypass)
-        => BypassLimitResolver(ctx => ctx is ResilienceContext rc && shouldBypass(rc));
+        => base.BypassLimitResolver(ctx => ctx is ResilienceContext rc && shouldBypass(rc));
 
     /// <summary>Bypass the limit when the operation key matches <paramref name="operationKey"/>.</summary>
     public ResilienceContextLimiterBuilder BypassLimitByOperationKey(string operationKey)

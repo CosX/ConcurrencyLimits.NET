@@ -34,7 +34,7 @@ public sealed class HttpRequestLimiterBuilder
 
     /// <summary>Bypass the limit when the predicate evaluates to true for the request.</summary>
     public HttpRequestLimiterBuilder BypassLimitResolver(Func<HttpContext, bool> shouldBypass)
-        => BypassLimitResolver(ctx => ctx is HttpContext http && shouldBypass(http));
+        => base.BypassLimitResolver(ctx => ctx is HttpContext http && shouldBypass(http));
 
     /// <summary>Bypass the limit if the named header matches the given value.</summary>
     public HttpRequestLimiterBuilder BypassLimitByHeader(string name, string value)
