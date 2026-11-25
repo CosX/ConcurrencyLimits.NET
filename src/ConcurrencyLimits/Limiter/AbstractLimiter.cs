@@ -70,11 +70,16 @@ public abstract class AbstractLimiter<TContext> : ILimiter<TContext>
 
     private sealed class ListenerImpl(AbstractLimiter<TContext> limiter, long startTime, int currentInflight) : IListener
     {
+        // A call faster than the clock's resolution (100ns Stopwatch ticks on Windows, or a coarse
+        // custom NanoClock) measures as 0. Report it as 1ns: Vegas rejects rtt <= 0 by throwing, and
+        // Gradient/Gradient2 would compute 0/0 = NaN and collapse the limit to 0.
+        private long Rtt() => Math.Max(1, limiter._clock() - startTime);
+
         public void OnSuccess()
         {
             Interlocked.Decrement(ref limiter._inFlight);
             limiter._successCounter.Increment();
-            limiter._limitAlgorithm.OnSample(startTime, limiter._clock() - startTime, currentInflight, false);
+            limiter._limitAlgorithm.OnSample(startTime, Rtt(), currentInflight, false);
         }
 
         public void OnIgnore()
@@ -87,7 +92,7 @@ public abstract class AbstractLimiter<TContext> : ILimiter<TContext>
         {
             Interlocked.Decrement(ref limiter._inFlight);
             limiter._droppedCounter.Increment();
-            limiter._limitAlgorithm.OnSample(startTime, limiter._clock() - startTime, currentInflight, true);
+            limiter._limitAlgorithm.OnSample(startTime, Rtt(), currentInflight, true);
         }
     }
 
