@@ -65,11 +65,10 @@ public sealed class ConcurrencyLimitServerInterceptor : Interceptor
             throw new RpcException(_statusSupplier());
         }
 
+        TResponse response;
         try
         {
-            TResponse response = await continuation(request, context);
-            listener.OnSuccess();
-            return response;
+            response = await continuation(request, context);
         }
         catch (RpcException ex) when (ex.StatusCode is StatusCode.DeadlineExceeded or StatusCode.Cancelled)
         {
@@ -81,5 +80,8 @@ public sealed class ConcurrencyLimitServerInterceptor : Interceptor
             listener.OnIgnore();
             throw;
         }
+
+        listener.OnSuccess();
+        return response;
     }
 }

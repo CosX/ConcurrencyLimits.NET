@@ -16,8 +16,6 @@ public static class SystemNanoTime
     /// </summary>
     public static long Now()
     {
-        // Integer math avoids the double-mantissa precision loss that a (ticks * nanosPerTick)
-        // multiply suffers once the timestamp grows large.
         long ticks = Stopwatch.GetTimestamp();
         long whole = ticks / Frequency * NanosPerSecond;
         long frac = ticks % Frequency * NanosPerSecond / Frequency;

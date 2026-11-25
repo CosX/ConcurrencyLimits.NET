@@ -73,7 +73,6 @@ public class BlockingLimiterTest
         limiter.Acquire(null);
 
         var task = Task.Run(() => limiter.Acquire(null));
-        // The second acquire blocks; it must not complete within the timeout.
         Assert.False(task.Wait(TimeSpan.FromSeconds(1)));
     }
 

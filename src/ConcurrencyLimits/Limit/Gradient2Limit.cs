@@ -133,6 +133,11 @@ public sealed class Gradient2Limit : AbstractLimit
 
     protected override int Update(long startTime, long rtt, int inflight, bool didDrop)
     {
+        if (rtt <= 0)
+        {
+            return (int)_estimatedLimit;
+        }
+
         double estimatedLimit = _estimatedLimit;
         double queueSize = _queueSize((int)estimatedLimit);
 
@@ -144,13 +149,11 @@ public sealed class Gradient2Limit : AbstractLimit
         _longRttSampleListener.AddDoubleSample(longRtt);
         _queueSizeSampleListener.AddDoubleSample(queueSize);
 
-        // If the long RTT is substantially larger than the short RTT then reduce the long RTT measurement.
         if (longRtt / shortRtt > 2)
         {
             _longRtt.Update(current => current * 0.95);
         }
 
-        // Don't grow the limit if we are app limited
         if (inflight < estimatedLimit / 2)
         {
             return (int)estimatedLimit;

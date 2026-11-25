@@ -70,11 +70,13 @@ public abstract class AbstractLimiter<TContext> : ILimiter<TContext>
 
     private sealed class ListenerImpl(AbstractLimiter<TContext> limiter, long startTime, int currentInflight) : IListener
     {
+        private long Rtt() => Math.Max(1, limiter._clock() - startTime);
+
         public void OnSuccess()
         {
             Interlocked.Decrement(ref limiter._inFlight);
             limiter._successCounter.Increment();
-            limiter._limitAlgorithm.OnSample(startTime, limiter._clock() - startTime, currentInflight, false);
+            limiter._limitAlgorithm.OnSample(startTime, Rtt(), currentInflight, false);
         }
 
         public void OnIgnore()
@@ -87,7 +89,7 @@ public abstract class AbstractLimiter<TContext> : ILimiter<TContext>
         {
             Interlocked.Decrement(ref limiter._inFlight);
             limiter._droppedCounter.Increment();
-            limiter._limitAlgorithm.OnSample(startTime, limiter._clock() - startTime, currentInflight, true);
+            limiter._limitAlgorithm.OnSample(startTime, Rtt(), currentInflight, true);
         }
     }
 

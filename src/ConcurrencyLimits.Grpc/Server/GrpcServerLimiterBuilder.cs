@@ -18,7 +18,7 @@ public sealed class GrpcServerLimiterBuilder
 
     /// <summary>Bypass the limit when the predicate evaluates to true for the call.</summary>
     public GrpcServerLimiterBuilder BypassLimitResolver(Func<IGrpcServerRequestContext, bool> shouldBypass)
-        => BypassLimitResolver(ctx => ctx is IGrpcServerRequestContext c && shouldBypass(c));
+        => base.BypassLimitResolver(ctx => ctx is IGrpcServerRequestContext c && shouldBypass(c));
 
     /// <summary>Bypass the limit if the full method name matches.</summary>
     public GrpcServerLimiterBuilder BypassLimitByMethod(string fullMethodName)

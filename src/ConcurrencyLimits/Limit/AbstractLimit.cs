@@ -6,8 +6,8 @@ public abstract class AbstractLimit : ILimit
     private readonly List<Action<int>> _listeners = new();
     private readonly object _sync = new();
     private readonly object _dispatchLock = new();
-    private long _version;           // guarded by _sync
-    private long _dispatchedVersion; // guarded by _dispatchLock
+    private long _version;
+    private long _dispatchedVersion;
 
     /// <summary>Lock guarding algorithm state. Subclasses must hold this when reading mutable
     /// state outside <see cref="Update"/> (e.g. in accessors or ToString) to avoid torn reads.</summary>
@@ -53,10 +53,6 @@ public abstract class AbstractLimit : ILimit
         Dispatch(snapshot, newLimit, version);
     }
 
-    // Dispatch outside _sync so listener callbacks (e.g. semaphore resize) can't stall
-    // algorithm state or invert lock order with downstream limiter locks. Changes are
-    // version-stamped under _sync and stale dispatches dropped, so listeners never observe
-    // limit changes out of order (Java delivers in order by notifying inside synchronized).
     private void Dispatch(Action<int>[]? snapshot, int newLimit, long version)
     {
         if (snapshot == null)
@@ -67,7 +63,7 @@ public abstract class AbstractLimit : ILimit
         {
             if (version <= _dispatchedVersion)
             {
-                return; // A newer limit was already delivered; dropping this one keeps listeners ordered.
+                return;
             }
             _dispatchedVersion = version;
             foreach (var listener in snapshot)

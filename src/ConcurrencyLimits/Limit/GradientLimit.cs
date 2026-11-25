@@ -164,6 +164,11 @@ public sealed class GradientLimit : AbstractLimit
 
     protected override int Update(long startTime, long rtt, int inflight, bool didDrop)
     {
+        if (rtt <= 0)
+        {
+            return (int)_estimatedLimit;
+        }
+
         _lastRtt = rtt;
         _minWindowRttSampleListener.AddLongSample(rtt);
 

@@ -94,7 +94,6 @@ public sealed class WindowedLimit : ILimit
 
         if (endTime > Volatile.Read(ref _nextUpdateTime))
         {
-            // Only allow one thread to propagate the sample to the delegate.
             if (Monitor.TryEnter(_lock))
             {
                 try

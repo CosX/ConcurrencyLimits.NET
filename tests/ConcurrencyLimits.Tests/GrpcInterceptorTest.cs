@@ -62,8 +62,6 @@ public class GrpcInterceptorTest
     private static AsyncUnaryCall<string> Call(Task<string> response)
         => new(response, Task.FromResult(new Metadata()), () => Status.DefaultSuccess, () => new Metadata(), () => { });
 
-    // ---------- Server interceptor ----------
-
     [Fact]
     public async Task ServerRejectsWithUnavailableWhenLimitExceeded()
     {
@@ -145,8 +143,6 @@ public class GrpcInterceptorTest
         Assert.Equal(0, listener.DroppedCount);
     }
 
-    // ---------- Client interceptor: blocking ----------
-
     [Fact]
     public void ClientBlockingRejectsWithUnavailableWhenLimitExceeded()
     {
@@ -201,8 +197,6 @@ public class GrpcInterceptorTest
         Assert.Equal(1, listener.IgnoreCount);
         Assert.Equal(0, listener.DroppedCount);
     }
-
-    // ---------- Client interceptor: async ----------
 
     [Fact]
     public void ClientAsyncRejectsWithUnavailableWhenLimitExceeded()

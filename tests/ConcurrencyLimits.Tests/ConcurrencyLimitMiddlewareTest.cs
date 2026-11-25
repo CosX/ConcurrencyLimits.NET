@@ -37,7 +37,6 @@ public class ConcurrencyLimitMiddlewareTest
         var gate = new TaskCompletionSource();
         var release = new TaskCompletionSource();
 
-        // A handler that blocks so the single permit stays held.
         var middleware = Build(async _ =>
         {
             gate.TrySetResult();
@@ -45,7 +44,7 @@ public class ConcurrencyLimitMiddlewareTest
         }, limit: 1);
 
         var first = Task.Run(async () => await middleware.InvokeAsync(new DefaultHttpContext()));
-        await gate.Task; // ensure the permit is held
+        await gate.Task;
 
         var ctx = new DefaultHttpContext();
         await middleware.InvokeAsync(ctx);

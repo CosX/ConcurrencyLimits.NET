@@ -57,7 +57,6 @@ public sealed class BlockingLimiter<TContext> : ILimiter<TContext>
                     return listener;
                 }
 
-                // We have reached the limit so block until a token is released
                 Monitor.Wait(_lock, (int)timeoutMs);
             }
         }
@@ -67,8 +66,6 @@ public sealed class BlockingLimiter<TContext> : ILimiter<TContext>
     {
         lock (_lock)
         {
-            // PulseAll, mirroring Java's notifyAll: a single Pulse is consumed by a waiter whose
-            // deadline already expired, losing the wakeup while other waiters sleep on a free token.
             Monitor.PulseAll(_lock);
         }
     }
@@ -83,7 +80,6 @@ public sealed class BlockingLimiter<TContext> : ILimiter<TContext>
 
     private sealed class UnblockingListener(IListener listener, Action unblock) : IListener
     {
-        // Unblock in finally: a throwing delegate must not strand blocked waiters.
         public void OnSuccess()
         {
             try

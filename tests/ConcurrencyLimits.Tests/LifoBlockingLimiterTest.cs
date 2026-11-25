@@ -33,9 +33,7 @@ public class LifoBlockingLimiterTest
         var sw = Stopwatch.StartNew();
         IListener? listener = _blockingLimiter.Acquire(null);
         sw.Stop();
-        // Wait(int ms) is timed off Environment.TickCount, so it can return a few ms
-        // short of 1s as measured by Stopwatch. Allow a small tolerance.
-        Assert.True(sw.ElapsedMilliseconds >= 950, $"Duration = {sw.ElapsedMilliseconds}");
+        Assert.True(sw.ElapsedMilliseconds >= 1000, $"Duration = {sw.ElapsedMilliseconds}");
         Assert.Null(listener);
     }
 
@@ -99,7 +97,7 @@ public class LifoBlockingLimiterTest
         var sw = Stopwatch.StartNew();
         IListener? listener = _blockingLimiter.Acquire(null);
         sw.Stop();
-        Assert.True(sw.Elapsed.TotalSeconds >= 1, $"Duration = {sw.ElapsedMilliseconds}");
+        Assert.True(sw.ElapsedMilliseconds >= 1000, $"Duration = {sw.ElapsedMilliseconds}");
         Assert.Null(listener);
     }
 

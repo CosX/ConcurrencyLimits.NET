@@ -64,7 +64,6 @@ public sealed class BlockingAdaptiveExecutor
                 .MetricRegistry(MetricRegistry)
                 .WithLimit(AIMDLimit.NewBuilder().Build())
                 .Build<object?>();
-            // Wrap so builder-built executors block like the constructor paths do, instead of fast-failing.
             Limiter = EnsureBlocking(Limiter);
             return new BlockingAdaptiveExecutor(this);
         }
@@ -99,31 +98,36 @@ public sealed class BlockingAdaptiveExecutor
     public void Execute(Action command)
     {
         IListener listener = _limiter.Acquire(null) ?? throw new RejectedExecutionException();
+        int started = 0;
         try
         {
             _executor(() =>
             {
+                Volatile.Write(ref started, 1);
                 try
                 {
                     command();
-                    listener.OnSuccess();
                 }
                 catch (UncheckedTimeoutException)
                 {
                     listener.OnDropped();
+                    return;
                 }
                 catch (RejectedExecutionException)
                 {
                     listener.OnDropped();
+                    return;
                 }
                 catch (Exception)
                 {
-                    // Unknown cause; the only sane thing to do is ignore this request.
                     listener.OnIgnore();
+                    return;
                 }
+
+                listener.OnSuccess();
             });
         }
-        catch (Exception)
+        catch (Exception) when (Volatile.Read(ref started) == 0)
         {
             listener.OnIgnore();
             throw;

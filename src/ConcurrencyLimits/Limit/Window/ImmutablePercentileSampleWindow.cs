@@ -36,8 +36,6 @@ public sealed class ImmutablePercentileSampleWindow : ISampleWindow
         {
             return this;
         }
-        // Copy-on-write: never mutate the shared backing array. A concurrent CAS loser
-        // in WindowedLimit retries with the original window, whose array must stay intact.
         long[] newRtts = new long[_observedRtts.Length];
         Array.Copy(_observedRtts, newRtts, _sampleCount);
         newRtts[_sampleCount] = rtt;

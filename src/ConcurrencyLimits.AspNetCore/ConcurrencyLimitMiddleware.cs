@@ -29,11 +29,9 @@ public sealed class ConcurrencyLimitMiddleware
             try
             {
                 await _next(context);
-                listener.OnSuccess();
             }
             catch (OperationCanceledException) when (context.RequestAborted.IsCancellationRequested)
             {
-                // Client aborted / timed out: a real drop the algorithm must see, not an ignore.
                 listener.OnDropped();
                 throw;
             }
@@ -42,6 +40,8 @@ public sealed class ConcurrencyLimitMiddleware
                 listener.OnIgnore();
                 throw;
             }
+
+            listener.OnSuccess();
         }
         else if (!context.Response.HasStarted)
         {

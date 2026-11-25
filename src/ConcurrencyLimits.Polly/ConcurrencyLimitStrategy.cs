@@ -55,7 +55,6 @@ internal sealed class ConcurrencyLimitStrategy : ResilienceStrategy
             return;
         }
 
-        // Cancellation tied to the resilience context's token is a real drop (client gave up / timeout).
         if (exception is OperationCanceledException && context.CancellationToken.IsCancellationRequested)
         {
             listener.OnDropped();
