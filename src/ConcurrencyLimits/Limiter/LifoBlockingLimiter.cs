@@ -1,3 +1,4 @@
+using System.Diagnostics;
 using ConcurrencyLimits.Internal;
 
 namespace ConcurrencyLimits.Limiter;
@@ -64,7 +65,24 @@ public sealed class LifoBlockingLimiter<TContext> : ILimiter<TContext>
         public IListener? Listener;
         public readonly TContext Context = context;
 
-        public bool Await(long timeoutMillis) => _latch.Wait((int)Math.Clamp(timeoutMillis, 0, int.MaxValue));
+        public bool Await(long timeoutMillis)
+        {
+            long frequency = Stopwatch.Frequency;
+            long deadline = Stopwatch.GetTimestamp() + Math.Clamp(timeoutMillis, 0, int.MaxValue) * frequency / 1000;
+            while (true)
+            {
+                long remaining = deadline - Stopwatch.GetTimestamp();
+                if (remaining <= 0)
+                {
+                    return _latch.IsSet;
+                }
+                int waitMillis = (int)Math.Clamp((remaining * 1000 + frequency - 1) / frequency, 1, int.MaxValue);
+                if (_latch.Wait(waitMillis))
+                {
+                    return true;
+                }
+            }
+        }
 
         public void Set(IListener? listener)
         {
