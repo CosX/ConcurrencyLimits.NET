@@ -74,7 +74,6 @@ public class ConcurrencyLimitPollyStrategyTest
         await Assert.ThrowsAsync<InvalidOperationException>(async () =>
             await pipeline.ExecuteAsync<int>(_ => throw new InvalidOperationException("boom")));
 
-        // Pipeline should still admit further work — permit was released via OnIgnore.
         int result = await pipeline.ExecuteAsync(_ => ValueTask.FromResult(7));
         Assert.Equal(7, result);
     }

@@ -50,7 +50,6 @@ public sealed class ConcurrencyLimitClientInterceptor : Interceptor
             throw;
         }
 
-        // Outside the try so a throwing OnSuccess can't be followed by OnIgnore (double release).
         listener.OnSuccess();
         return response;
     }
@@ -69,7 +68,6 @@ public sealed class ConcurrencyLimitClientInterceptor : Interceptor
         }
         catch
         {
-            // continuation threw before producing a call; release the token we acquired.
             listener.OnIgnore();
             throw;
         }
@@ -104,7 +102,6 @@ public sealed class ConcurrencyLimitClientInterceptor : Interceptor
             throw;
         }
 
-        // Outside the try so a throwing OnSuccess can't be followed by OnIgnore (double release).
         listener.OnSuccess();
         return response;
     }

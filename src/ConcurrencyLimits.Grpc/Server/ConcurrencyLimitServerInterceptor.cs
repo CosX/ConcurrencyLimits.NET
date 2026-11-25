@@ -81,7 +81,6 @@ public sealed class ConcurrencyLimitServerInterceptor : Interceptor
             throw;
         }
 
-        // Outside the try so a throwing OnSuccess can't be followed by OnIgnore (double release).
         listener.OnSuccess();
         return response;
     }

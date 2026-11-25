@@ -84,7 +84,6 @@ public class BuilderValidationTest
         });
         await firstRunning.Task;
 
-        // Pre-fix this threw RejectedExecutionException immediately; now it must block until released.
         Task second = Task.Run(() => executor.Execute(() => secondDone.SetResult()));
         await Task.Delay(100);
         Assert.False(second.IsCompleted);

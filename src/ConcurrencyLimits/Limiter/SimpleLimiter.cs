@@ -46,8 +46,6 @@ public class SimpleLimiter<TContext> : AbstractLimiter<TContext>
 
     protected override void OnNewLimit(int newLimit)
     {
-        // Serialize the old/new read and the matching semaphore delta so concurrent
-        // limit changes can't compute deltas against a stale baseline and drift permits.
         lock (_limitChangeLock)
         {
             int oldLimit = GetLimit();
@@ -102,7 +100,6 @@ public class SimpleLimiter<TContext> : AbstractLimiter<TContext>
 
     private sealed class ReleasingListener(SimpleLimiter<TContext> limiter, IListener delegateListener) : IListener
     {
-        // Release in finally: a throwing limit algorithm must not leak the permit.
         public void OnSuccess()
         {
             try

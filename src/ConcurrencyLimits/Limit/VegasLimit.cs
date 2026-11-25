@@ -198,12 +198,10 @@ public class VegasLimit : AbstractLimit
         int queueSize = (int)Math.Ceiling(estimatedLimit * (1 - (double)rttNoLoad / rtt));
 
         double newLimit;
-        // Treat any drop (i.e timeout) as needing to reduce the limit
         if (didDrop)
         {
             newLimit = _decreaseFunc(estimatedLimit);
         }
-        // Prevent upward drift if not close to the limit
         else if (inflight * 2 < estimatedLimit)
         {
             return (int)estimatedLimit;
@@ -214,22 +212,18 @@ public class VegasLimit : AbstractLimit
             int beta = _betaFunc((int)estimatedLimit);
             int threshold = _thresholdFunc((int)estimatedLimit);
 
-            // Aggressive increase when no queuing
             if (queueSize <= threshold)
             {
                 newLimit = estimatedLimit + beta;
             }
-            // Increase the limit if queue is still manageable
             else if (queueSize < alpha)
             {
                 newLimit = _increaseFunc(estimatedLimit);
             }
-            // Detecting latency so decrease
             else if (queueSize > beta)
             {
                 newLimit = _decreaseFunc(estimatedLimit);
             }
-            // We're within the sweet spot so nothing to do
             else
             {
                 return (int)estimatedLimit;

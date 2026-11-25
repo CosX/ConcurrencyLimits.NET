@@ -164,8 +164,6 @@ public sealed class GradientLimit : AbstractLimit
 
     protected override int Update(long startTime, long rtt, int inflight, bool didDrop)
     {
-        // A non-positive rtt makes rttNoLoad / rtt = 0/0 = NaN, which sticks in _estimatedLimit
-        // and casts to a limit of 0 that never recovers. Ignore such samples.
         if (rtt <= 0)
         {
             return (int)_estimatedLimit;

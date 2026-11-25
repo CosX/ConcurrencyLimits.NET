@@ -28,8 +28,6 @@ public sealed class Partition(string name)
 
     internal void UpdateLimit(int totalLimit)
     {
-        // Round up and ensure at least 1. With this technique the sum of bin limits may end up
-        // being higher than the concurrency limit.
         _limit = (int)Math.Max(1, Math.Ceiling(totalLimit * _percent));
     }
 

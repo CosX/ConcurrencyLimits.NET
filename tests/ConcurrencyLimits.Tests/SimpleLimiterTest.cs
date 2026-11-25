@@ -86,7 +86,6 @@ public class SimpleLimiterTest
         IListener listener = limiter.Acquire("live")!;
         Assert.Throws<InvalidOperationException>(listener.OnSuccess);
 
-        // Permit must have been released despite the algorithm throwing.
         Assert.NotNull(limiter.Acquire("live"));
     }
 

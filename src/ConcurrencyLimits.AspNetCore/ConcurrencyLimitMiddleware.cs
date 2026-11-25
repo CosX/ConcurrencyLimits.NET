@@ -32,7 +32,6 @@ public sealed class ConcurrencyLimitMiddleware
             }
             catch (OperationCanceledException) when (context.RequestAborted.IsCancellationRequested)
             {
-                // Client aborted / timed out: a real drop the algorithm must see, not an ignore.
                 listener.OnDropped();
                 throw;
             }
@@ -42,8 +41,6 @@ public sealed class ConcurrencyLimitMiddleware
                 throw;
             }
 
-            // Outside the try: if OnSuccess itself throws, the catch above would release the
-            // token a second time (OnIgnore after OnSuccess), inflating permits.
             listener.OnSuccess();
         }
         else if (!context.Response.HasStarted)

@@ -64,9 +64,6 @@ public sealed class LifoBlockingLimiter<TContext> : ILimiter<TContext>
         public IListener? Listener;
         public readonly TContext Context = context;
 
-        // Clamp: context-derived timeouts (e.g. deadline - now) can be negative or exceed
-        // int.MaxValue; ManualResetEventSlim.Wait throws on values below -1 and the raw
-        // cast would overflow. 0 polls the latch without blocking.
         public bool Await(long timeoutMillis) => _latch.Wait((int)Math.Clamp(timeoutMillis, 0, int.MaxValue));
 
         public void Set(IListener? listener)
@@ -106,8 +103,6 @@ public sealed class LifoBlockingLimiter<TContext> : ILimiter<TContext>
 
         ListenerHolder holder = new(context);
 
-        // Restrict backlog size so the queue doesn't grow unbounded during an outage.
-        // Check and enqueue atomically to avoid overshooting _backlogSize under concurrency.
         lock (_lock)
         {
             if (_backlog.Count >= _backlogSize)
@@ -124,7 +119,6 @@ public sealed class LifoBlockingLimiter<TContext> : ILimiter<TContext>
                 RemoveLastOccurrence(holder);
             }
             holder.DisposeLatch();
-            // if we acquired a token just as we were timing out then return it
             return holder.Listener;
         }
         holder.DisposeLatch();
@@ -156,7 +150,6 @@ public sealed class LifoBlockingLimiter<TContext> : ILimiter<TContext>
                     _backlog.RemoveFirst();
                     holder.Set(listener);
                 }
-                // else: still can't acquire; unblock will be called again on next release.
             }
         }
     }
@@ -171,7 +164,6 @@ public sealed class LifoBlockingLimiter<TContext> : ILimiter<TContext>
 
     private sealed class UnblockingListener(IListener listener, Action unblock) : IListener
     {
-        // Unblock in finally: a throwing delegate must not strand backlogged waiters.
         public void OnSuccess()
         {
             try

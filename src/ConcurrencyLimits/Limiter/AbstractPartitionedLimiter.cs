@@ -70,7 +70,6 @@ public abstract class AbstractPartitionedLimiter<TContext> : AbstractLimiter<TCo
 
         public ILimiter<TContext> Build()
         {
-            // Half-configured partitioning silently degraded to a SimpleLimiter before; fail loudly instead.
             Preconditions.CheckState(HasPartitions() == (_partitionResolvers.Count != 0),
                 HasPartitions()
                     ? "Partitions are configured but no partition resolver was provided"
@@ -133,11 +132,6 @@ public abstract class AbstractPartitionedLimiter<TContext> : AbstractLimiter<TCo
 
         Partition partition = ResolvePartition(context);
 
-        // The partition is not a hard limit. It is only applied if the global limit is exceeded.
-        // This allows for excess capacity in each partition to allow bursting over the limit, but
-        // only if there is spare global capacity. The check, the partition increment and the
-        // inflight increment must be atomic, otherwise concurrent acquires transiently breach
-        // both the global and partition limits.
         lock (_acquireLock)
         {
             if (GetInflight() < GetLimit() || !partition.IsLimitExceeded())
@@ -177,7 +171,6 @@ public abstract class AbstractPartitionedLimiter<TContext> : AbstractLimiter<TCo
 
     private sealed class PartitionReleasingListener(IListener listener, Partition partition) : IListener
     {
-        // Release in finally: a throwing limit algorithm must not leak the partition slot.
         public void OnSuccess()
         {
             try

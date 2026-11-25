@@ -64,7 +64,6 @@ public sealed class BlockingAdaptiveExecutor
                 .MetricRegistry(MetricRegistry)
                 .WithLimit(AIMDLimit.NewBuilder().Build())
                 .Build<object?>();
-            // Wrap so builder-built executors block like the constructor paths do, instead of fast-failing.
             Limiter = EnsureBlocking(Limiter);
             return new BlockingAdaptiveExecutor(this);
         }
@@ -121,17 +120,13 @@ public sealed class BlockingAdaptiveExecutor
                 }
                 catch (Exception)
                 {
-                    // Unknown cause; the only sane thing to do is ignore this request.
                     listener.OnIgnore();
                     return;
                 }
 
-                // Outside the try so a throwing OnSuccess can't be followed by OnIgnore (double release).
                 listener.OnSuccess();
             });
         }
-        // Only release here if the work never ran. An executor that runs work inline would
-        // otherwise surface a throwing OnSuccess here and release the token a second time.
         catch (Exception) when (Volatile.Read(ref started) == 0)
         {
             listener.OnIgnore();
